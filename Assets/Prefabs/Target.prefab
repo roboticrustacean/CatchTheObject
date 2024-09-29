@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 3419188311746492316}
   - component: {fileID: 6575302651980519920}
   - component: {fileID: 1842411732087088844}
-  - component: {fileID: 7102483389170219351}
   m_Layer: 0
   m_Name: Target
   m_TagString: target
@@ -103,7 +102,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -136,15 +135,3 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &7102483389170219351
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7709238506107355804}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 86273f963e5ecc44e8113c5e9ff175c6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

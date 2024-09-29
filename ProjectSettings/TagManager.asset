@@ -8,6 +8,7 @@ TagManager:
   - target
   - ground
   - fallingObject
+  - GroundTrigger
   layers:
   - Default
   - TransparentFX

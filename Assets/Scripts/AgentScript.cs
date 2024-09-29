@@ -2,68 +2,109 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
-
-
+using System;
 
 public class AgentScript : Agent
 {
-    Rigidbody rBody;
+    // private Rigidbody rBody; // Commented out to stop using Rigidbody for movement
     public float speed = 10f;
-    //public float jumpForce = 5f;
     private bool isGrounded;
     private int consecutiveCatches = 0;
     private float consecutiveCatchReward = 1.0f;
+    private int objectsFallen = 0;
+    public int maxObjectsPerEpisode = 5;
+
     [SerializeField] private MeshRenderer meshRenderer;
     [SerializeField] private Material winMaterial;
     [SerializeField] private Material loseMaterial;
 
-    // find ObjectSpawner object and get DropObject script
-    DropObject dropObject;
-
     private void Start()
     {
-        dropObject = FindObjectOfType<DropObject>();
+        // rBody = GetComponent<Rigidbody>();
     }
 
     public override void Initialize()
     {
-        rBody = GetComponent<Rigidbody>();
+        // rBody = GetComponent<Rigidbody>(); 
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
         sensor.AddObservation(this.transform.localPosition);
-        sensor.AddObservation(rBody.velocity);
+        // sensor.AddObservation(rBody.velocity); // Commented out since we aren't using Rigidbody
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
         float moveX = actionBuffers.ContinuousActions[0];
         float moveZ = actionBuffers.ContinuousActions[1];
-        float jump = actionBuffers.ContinuousActions[2];
 
+        // Use localPosition to move the agent
         Vector3 move = new Vector3(moveX, 0, moveZ) * speed * Time.deltaTime;
-        rBody.AddForce(move, ForceMode.VelocityChange);
+        transform.localPosition += move; // Update the agent's position
 
-        //if (isGrounded && jump > 0.5f)
-        //{
-        //    rBody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        //}
+        // Uncomment the following if you want to apply some form of damping or friction
+        // if (rBody) // Check if we are still using Rigidbody
+        // {
+        //     rBody.AddForce(move, ForceMode.VelocityChange);
+        // }
     }
-
 
     public override void OnEpisodeBegin()
     {
         this.transform.localPosition = new Vector3(0, 0.5f, 0);
-        rBody.velocity = Vector3.zero;
+        // rBody.velocity = Vector3.zero; // Commented out since we aren't using Rigidbody
+
+        objectsFallen = 0;
+        consecutiveCatches = 0;
+        consecutiveCatchReward = 1.0f;
+
+        // Reset time scale
+        Time.timeScale = 2f;
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
+        // Slow down simulation for heuristics
+        Time.timeScale = 0.5f;  // Set time scale to half speed
+
         var continuousActions = actionsOut.ContinuousActions;
         continuousActions[0] = Input.GetAxis("Horizontal");
         continuousActions[1] = Input.GetAxis("Vertical");
-        //continuousActions[2] = Input.GetKey(KeyCode.Space) ? 1f : 0f;
+    }
+
+    public void ApplyFallingObjectPenalty()
+    {
+        Console.WriteLine("Falling object penalty applied");
+        objectsFallen++;
+        AddReward(-1.0f);
+        meshRenderer.material = loseMaterial;
+
+        if (objectsFallen >= maxObjectsPerEpisode)
+        {
+            EndEpisode();
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("wall"))
+        {
+            AddReward(-0.5f);
+            meshRenderer.material = loseMaterial;
+            // rBody.velocity = Vector3.zero; // Commented out
+            EndEpisode();
+        }
+        if (other.gameObject.CompareTag("target"))
+        {
+            AddReward(consecutiveCatchReward);
+            meshRenderer.material = winMaterial;
+
+            consecutiveCatches++;
+            consecutiveCatchReward = Mathf.Min(consecutiveCatchReward + 0.2f, 3.0f);
+
+            Destroy(other.gameObject);
+        }
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -74,28 +115,6 @@ public class AgentScript : Agent
         }
 
 
-        if (collision.gameObject.CompareTag("target"))
-        {
-
-            AddReward(consecutiveCatchReward);
-            meshRenderer.material = winMaterial;
-            consecutiveCatches++;
-
-            // Bir sonraki yakalama ödülünü 0.2 artýr, maksimum ödül 3.0 olabilir
-            consecutiveCatchReward = Mathf.Min(consecutiveCatchReward + 0.2f, 3.0f);
-
-
-            Destroy(collision.gameObject);
-            //dropObject.SpawnNewObject();
-        }
-
-
-        if (collision.gameObject.CompareTag("wall"))
-        {
-            meshRenderer.material = loseMaterial;
-            AddReward(-0.5f);
-
-        }
     }
 
     private void OnCollisionExit(Collision collision)
@@ -105,26 +124,4 @@ public class AgentScript : Agent
             isGrounded = false;
         }
     }
-
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.CompareTag("target"))
-        {
-
-            AddReward(-1.0f);
-
-
-            consecutiveCatches = 0;
-            consecutiveCatchReward = 1.0f;
-
-            meshRenderer.material = loseMaterial;
-
-
-            Destroy(other.gameObject);
-            //dropObject.SpawnNewObject();
-        }
-    }
-
-
 }

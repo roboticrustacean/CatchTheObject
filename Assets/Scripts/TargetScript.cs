@@ -4,11 +4,30 @@ using UnityEngine;
 
 public class TargetScript : MonoBehaviour
 {
-    // if target hits the ground, destroy it
-    void OnCollisionEnter(Collision collision)
+    [SerializeField] GameObject agent; // Reference to the agent GameObject
+    private AgentScript agentScript; // Reference to the agent script
+
+
+    // Start is called before the first frame update
+    void Start()
     {
-        if (collision.gameObject.tag == "ground")
+        // Get the AgentScript component from the agent GameObject
+        agentScript = agent.GetComponent<AgentScript>();
+    }
+
+    // Use OnTriggerEnter to detect when the target enters the trigger
+    private void OnTriggerEnter(Collider other)
+    {
+        // Check if the target hit the ground trigger
+        if (other.gameObject.CompareTag("GroundTrigger"))  // The trigger just above the ground
         {
+            // Apply penalty before destroying the object
+            if (agentScript != null)
+            {
+                agentScript.ApplyFallingObjectPenalty();
+            }
+
+            // Destroy the target object
             Destroy(gameObject);
         }
     }
